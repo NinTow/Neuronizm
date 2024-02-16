@@ -13,15 +13,16 @@ int Dense(float *Input, float *Weight, float *Target, int InputDim, int OutputDi
 }
 int SGD(float *Parameter, float *BackForward, float *Input, float *Output, int InputDim, int OutputDim, float lr){
 	float grad[InputDim * OutputDim];
+	float limt = 0.000001;
 	for (int a = 0; a < OutputDim; a++){
 		for (int b = 0; b < InputDim; b++){
 			float y = 0;
-			Parameter[a * InputDim + b] += lr;
+			Parameter[a * InputDim + b] += limt;
 			for (int c = 0; c < InputDim; c++){
 				y += Parameter[a * InputDim + c] * Input[c];
 			}
-			grad[a * InputDim + b] = ((y - Output[a]) / lr) * BackForward[a];
-			Parameter[a * InputDim + b] -= lr;
+			grad[a * InputDim + b] = ((y - Output[a]) / limt) * BackForward[a];
+			Parameter[a * InputDim + b] -= limt;
 		}
 	}
 	for (int d = 0; d < InputDim; d++){
