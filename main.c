@@ -11,9 +11,9 @@ int Dense(float *Input, float *Weight, float *Target, int InputDim, int OutputDi
 	}
 	return 1;
 }
-int SGD(float *Parameter, float *BackForward, float *Input, float *Output, int InputDim, int OutputDim, float lr){
+int SGD(float *Parameter, float *BackForward, float *Input, float *Output, int InputDim, int OutputDim, float lr, float Lim_zero){
 	float grad[InputDim * OutputDim];
-	float limt = 0.000001;
+	float limt = Lim_zero;
 	for (int a = 0; a < OutputDim; a++){
 		for (int b = 0; b < InputDim; b++){
 			float y = 0;
@@ -45,9 +45,15 @@ float MAELoss(float *x, float *y, float *BackForward, int Size, float lr){
 }
 
 
-int Layers[] = {2, 16, 16, 1};
+int Layers[] = {2, 128, 128, 1};
 int LayerDeeph = 4;
-float model_fit(float *X, float *Y, float *W, float lr){
+float model_fit(float *X, float *Y, float *W, float lr, float Lim_zero){
+	int maxsize = 0;
+	for (int a = 0; a < LayerDeeph; a++){
+		if (maxsize < Layers[a]){
+			maxsize = Layers[a];
+		}
+	}
 	float W1[Layers[0] * Layers[1]];
 	float X1[Layers[1]];
 	int WS = 0;
@@ -72,13 +78,12 @@ float model_fit(float *X, float *Y, float *W, float lr){
 	}
 	WS += Layers[2] * Layers[3];
 	Dense(X2, W3, X3, Layers[2], Layers[3]);
-	printf("%f\n", X3[0]);
-	float BP[1024];
+	float BP[maxsize];
 	float ls = MAELoss(X3, Y, BP, Layers[3], lr);
 
-	SGD(W3, BP, X2, X3, Layers[2], Layers[3], lr);
-	SGD(W2, BP, X1, X2, Layers[1], Layers[2], lr);
-	SGD(W1, BP, X, X1, Layers[0], Layers[1], lr);
+	SGD(W3, BP, X2, X3, Layers[2], Layers[3], lr, Lim_zero);
+	SGD(W2, BP, X1, X2, Layers[1], Layers[2], lr, Lim_zero);
+	SGD(W1, BP, X, X1, Layers[0], Layers[1], lr, Lim_zero);
 
 	WS -= Layers[2] * Layers[3];
 	for (int a = 0; a < Layers[2] * Layers[3]; a++){
@@ -100,17 +105,18 @@ int main() {
 	for (int f = 0; f < LayerDeeph-1; f++){
 		ws += Layers[f] * Layers[f+1];
 	}
+	printf("Wlen%d\n", ws);
 	float W[ws];
 	for (int f = 0; f < ws; f++){
 		W[f] = 0.1;
 	}
 	float Yt[] = {1.0};
-	int epoch = 40;
+	int epoch = 600;
 
 	for (int g = 0; g < epoch; g++){
 
-		float ls = model_fit(X, Yt, W, 0.01);
-		//printf("%f\n", ls);
+		float ls = model_fit(X, Yt, W, 0.0001, 0.0001);
+		printf("%f\n", ls);
 	}
 	sleep(1);
 	return 0;
